@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Мета-тег для адаптации под мобильные устройства -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brawl Pirates</title>
+  <style>
+    /* Фон страницы задаётся через изображение (например, background.jpg) */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: url('background.jpg') center/cover no-repeat;
+    }
+    /* Игровой блок (контейнер) с прозрачным эффектом и поднятый вверх на 40px */
+    .game-container {
+      background: rgba(255, 255, 255, 0.3); /* белый с прозрачностью */
+      backdrop-filter: blur(1px);
+      border-radius: 30px;
+      padding: 160px 20px; /* увеличены вертикальные отступы */
+      text-align: center;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transform: translateY(-50px); /* Поднимаем блок на 40px */
+    }
+    /* Заголовок: эффект обводки для букв */
+    .game-container h1 {
+      margin-bottom: 20px;
+      font-size: 35px;
+      text-transform: uppercase;
+      transform: translateY(-90px);
+      color: white;
+      -webkit-text-stroke: 0px black; /* Обводка текста для Chrome/Safari */
+      /* Альтернативно можно использовать text-shadow для имитации обводки */
+      /* text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; */
+    }
+    /* Контейнер для черепков */
+    .skulls-container {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      height: 120px;
+      margin: 0 auto 20px;
+    }
+    /* Каждый блок с черепком позиционируется абсолютно.
+       Начальное значение top установлено в "-30px" (то есть смещено вверх на 30px) */
+    .skull-box {
+      position: absolute;
+      top: -30px;  /* Смещаем вверх на 30px */
+      width: 80px;
+      text-align: center;
+      transition: left 0.5s ease, top 0.5s ease;
+    }
+    .skull {
+      width: 80px;
+      height: 80px;
+      cursor: pointer;
+    }
+    /* Центрирование шарика по горизонтали */
+    .ball {
+      width: 40px;
+      height: 40px;
+      margin: 10px auto 0;
+      display: none; /* Шарик скрыт до момента показа */
+    }
+    /* Анимация подъёма выбранного черепка */
+    @keyframes liftAnimation {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-30px); }
+      70% { transform: translateY(-20px); }
+      100% { transform: translateY(-20px); }
+    }
+    .lifted .skull {
+      animation: liftAnimation 0.5s ease-out forwards;
+    }
+    /* Анимация появления шарика */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .fadeIn {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    /* Кнопка "Start": увеличена, красноватый фон, белая обводка и белый текст */
+    #startBtn {
+      font-size: 25px;
+      padding: 15px 45px;
+      background-color: #e74c3c; /* Красноватый оттенок */
+      color: white;
+      border: 5px solid white;
+      border-radius: 17px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.2s;
+    }
+    #startBtn:hover {
+      background-color: #c0392b;
+    }
+    /* Media query для маленьких экранов (например, iPhone) */
+    @media (max-width: 400px) {
+      .skull-box {
+        width: 60px;
+      }
+      .skull {
+        width: 60px;
+        height: 60px;
+      }
+      .ball {
+        width: 25px;
+        height: 25px;
+        margin: 8px auto 0;
+      }
+      .skulls-container {
+        height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <!-- Заголовок с эффектом обводки букв -->
+    <h1>OSON MONEY</h1>
+    <div class="skulls-container" id="skullsContainer">
+      <!-- Каждый блок с данными позиционируется через data-pos (0, 1, 2) -->
+      <div class="skull-box" data-pos="0">
+        <img src="skull.png" alt="Skull 1" class="skull">
+        <img src="ball.png" alt="Ball" class="ball">
+      </div>
+      <div class="skull-box" data-pos="1">
+        <img src="skull.png" alt="Skull 2" class="skull">
+        <img src="ball.png" alt="Ball" class="ball">
+      </div>
+      <div class="skull-box" data-pos="2">
+        <img src="skull.png" alt="Skull 3" class="skull">
+        <img src="ball.png" alt="Ball" class="ball">
+      </div>
+    </div>
+    <button id="startBtn">Start</button>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById('startBtn');
+    const skullsContainer = document.getElementById('skullsContainer');
+    let skullBoxes = Array.from(document.querySelectorAll('.skull-box'));
+    // Массив позиций будет вычисляться динамически
+    let positions = [];
+
+    // Функция для вычисления позиций (левый отступ для каждого слота)
+    function computePositions() {
+      const containerWidth = skullsContainer.clientWidth;
+      const skullWidth = skullBoxes[0].offsetWidth;
+      return [
+        0,
+        (containerWidth - skullWidth) / 2,
+        containerWidth - skullWidth
+      ];
+    }
+
+    // Инициализация позиций для всех блоков на основе их data-pos
+    // Теперь устанавливаем top как "-30px"
+    function initializePositions() {
+      positions = computePositions();
+      skullBoxes.forEach(box => {
+        const posIndex = Number(box.getAttribute('data-pos'));
+        box.style.left = positions[posIndex] + "px";
+        box.style.top = "-30px";  // смещаем на 30px вверх
+      });
+    }
+    initializePositions();
+
+    startBtn.addEventListener('click', startGame);
+
+    function startGame() {
+      initializePositions();
+      
+      // Сброс эффектов предыдущей игры
+      skullBoxes.forEach(box => {
+        box.classList.remove('lifted');
+        const ball = box.querySelector('.ball');
+        ball.style.display = 'none';
+        ball.classList.remove('fadeIn');
+      });
+
+      // Определяем число перемешиваний (3 или 4)
+      const shuffleCount = Math.floor(Math.random() * 2) + 3;
+      let currentShuffle = 0;
+      startBtn.disabled = true;
+
+      function performShuffle() {
+        if (currentShuffle < shuffleCount) {
+          let i = Math.floor(Math.random() * skullBoxes.length);
+          let j;
+          do {
+            j = Math.floor(Math.random() * skullBoxes.length);
+          } while (j === i);
+
+          const boxA = skullBoxes[i];
+          const boxB = skullBoxes[j];
+
+          // Для эффекта – временно поднимаем оба блока ещё на 10px (от базовой -30px → -40px)
+          boxA.style.top = "-40px";
+          boxB.style.top = "-40px";
+
+          const posA = Number(boxA.getAttribute('data-pos'));
+          const posB = Number(boxB.getAttribute('data-pos'));
+
+          // Меняем местами значения data-pos
+          boxA.setAttribute('data-pos', posB);
+          boxB.setAttribute('data-pos', posA);
+
+          // Обновляем положение по горизонтали (с анимацией благодаря transition)
+          boxA.style.left = positions[posB] + "px";
+          boxB.style.left = positions[posA] + "px";
+
+          // Через 250 мс возвращаем блокам базовое вертикальное положение (-30px)
+          setTimeout(() => {
+            boxA.style.top = "-30px";
+            boxB.style.top = "-30px";
+          }, 250);
+
+          currentShuffle++;
+          setTimeout(performShuffle, 600);
+        } else {
+          // После перемешиваний выбираем случайный блок для подъёма
+          const chosenIndex = Math.floor(Math.random() * skullBoxes.length);
+          const chosenBox = skullBoxes[chosenIndex];
+          chosenBox.classList.add('lifted');
+
+          // Показываем шарик с эффектом появления
+          const ball = chosenBox.querySelector('.ball');
+          ball.style.display = 'block';
+          ball.classList.add('fadeIn');
+
+          // Запускаем 10-секундный таймер (Cooldown)
+          let cooldown = 10;
+          startBtn.textContent = `Cooldown: ${cooldown}`;
+          const interval = setInterval(() => {
+            cooldown--;
+            if (cooldown > 0) {
+              startBtn.textContent = `Cooldown: ${cooldown}`;
+            } else {
+              startBtn.textContent = "Start";
+              startBtn.disabled = false;
+              clearInterval(interval);
+            }
+          }, 1000);
+        }
+      }
+      
+      performShuffle();
+    }
+  </script>
+</body>
+</html>
+
+
+
+
+
